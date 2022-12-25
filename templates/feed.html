@@ -4,20 +4,48 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="blog.ilvokhin.com">
+
+    <title>blog.ilvokhin.com</title>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
 </head>
 
-<body>
-    {% if posts %}
-        <ul>
-        {% for post in posts %}
-            <li>
-                <a href="{{ post.name }}">{{ post.metadata.title }}</a>
-                ({{ post.metadata.date }})
-            </li>
-        {% endfor %}
-        </ul>
-    {% endif %}
+<body class="feed">
+<header>
+<a class="title" href="/">
+    <h1>blog.ilvokhin.com</h1>
+</a>
+</header>
+
+<main>
+<content>
+
+{% if posts %}
+    <ul class="posts">
+    {% for post in posts %}
+        
+        <li>
+            <span>
+            <i>
+            <time datetime="{{ post.metadata.date }}" pubdate>
+            {{ post.metadata.date }}
+            </time>
+            </i>
+            </span>
+            <a href="{{ post.name }}">
+                {{ post.metadata.title }}
+                {% if post.is_draft() %}
+                    (Draft)
+                {% endif %}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+</content>
+</main>
 </body>
 
 </html>

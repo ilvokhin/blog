@@ -63,9 +63,9 @@ class Post(object):
 
         assert md, f"There is no markdown file in `{self.directory}`"
 
-        body = render.to_html(md)
+        content = render.to_html(md)
         rendered = self.template.render(title=self.metadata.title,
                                         date=self.metadata.date,
-                                        body=body)
+                                        content=content)
         render.write_file_content(os.path.join(workdir, "index.html"),
                                   rendered)

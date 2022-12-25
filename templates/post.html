@@ -4,14 +4,33 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="{{ title }}">
+
+    <title>{{ title }} | blog.ilvokhin.com</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 
-<body>
-    <h1>{{ title }}</h1>
-    <h3>{{ date }}</h3>
+<body class="post">
+<header>
+<a class="title" href="/">
+    <h1>blog.ilvokhin.com</h1>
+</a>
+</header>
 
-    {{ body|safe }}
+<main>
+<center>
+<h1>{{ title }}</h1>
+<p><i><time datetime="{{ date }}" pubdate>
+{{ date }}
+</time></i></p>
+</center>
+
+<content>
+    {{ content|safe }}
+</content>
+
+</main>
 </body>
 
 </html>

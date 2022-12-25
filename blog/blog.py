@@ -22,6 +22,13 @@ def find_posts(template, basedir):
         posts.append(Post(template, os.path.join(basedir, subdir)))
     return posts
 
+def copy_share(workdir):
+    for filename in os.listdir("share"):
+        source = os.path.join("share", filename)
+        destination = os.path.join(workdir, filename)
+
+        shutil.copy(source, destination)
+
 
 def generate_blog(include_drafts=False):
     env = Environment(loader=FileSystemLoader(searchpath="templates"),
@@ -43,6 +50,8 @@ def generate_blog(include_drafts=False):
 
     feed = Feed(env.get_template("feed.html"), posts)
     feed.generate(workdir)
+
+    copy_share(workdir)
 
 
 def main():
