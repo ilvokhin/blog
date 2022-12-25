@@ -22,6 +22,7 @@ def find_posts(template, basedir):
         posts.append(Post(template, os.path.join(basedir, subdir)))
     return posts
 
+
 def copy_share(workdir):
     for filename in os.listdir("share"):
         source = os.path.join("share", filename)
