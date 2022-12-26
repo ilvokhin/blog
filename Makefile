@@ -11,5 +11,8 @@ remote: $(TEMPLATES) $(SHARE) $(POSTS)
 server: remote
 	python3 -m http.server --directory remote
 
+deploy: remote
+	rsync -avzP remote/ sun.ilvokhin.com:/var/www/blog.ilvokhin.com/
+
 clean:
 	rm -rf remote
