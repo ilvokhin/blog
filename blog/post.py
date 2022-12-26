@@ -43,9 +43,6 @@ class Post(object):
 
         return Metadata(title, date, status)
 
-    def is_draft(self):
-        return self.metadata.status == "draft"
-
     def generate(self, basedir):
         postdir = os.path.basename(self.directory)
         workdir = os.path.join(basedir, postdir)

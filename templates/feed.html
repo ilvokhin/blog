@@ -24,7 +24,6 @@
 {% if posts %}
     <ul class="posts">
     {% for post in posts %}
-        
         <li>
             <span>
             <i>
@@ -35,9 +34,6 @@
             </span>
             <a href="{{ post.name }}">
                 {{ post.metadata.title }}
-                {% if post.is_draft() %}
-                    (Draft)
-                {% endif %}
             </a>
         </li>
     {% endfor %}

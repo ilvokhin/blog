@@ -3,6 +3,7 @@
 
 import os
 import shutil
+import argparse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -31,17 +32,11 @@ def copy_share(workdir):
         shutil.copy(source, destination)
 
 
-def generate_blog(include_drafts=False):
+def generate_blog():
     env = Environment(loader=FileSystemLoader(searchpath="templates"),
                       autoescape=select_autoescape())
 
-    posts = find_posts(env.get_template("post.html"),
-                       os.path.join("posts", "public"))
-
-    if include_drafts:
-        drafts = find_posts(env.get_template("post.html"),
-                            os.path.join("posts", "drafts"))
-        posts.extend(drafts)
+    posts = find_posts(env.get_template("post.html"), "posts")
 
     workdir = "remote"
     recreate_workdir(workdir)
@@ -56,7 +51,7 @@ def generate_blog(include_drafts=False):
 
 
 def main():
-    generate_blog(include_drafts=True)
+    generate_blog()
 
 
 if __name__ == "__main__":
