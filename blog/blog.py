@@ -37,6 +37,7 @@ def generate_blog():
                       autoescape=select_autoescape())
 
     posts = find_posts(env.get_template("post.html"), "posts")
+    posts = sorted(posts, key=lambda x: x.metadata.date, reverse=True)
 
     workdir = "remote"
     recreate_workdir(workdir)
