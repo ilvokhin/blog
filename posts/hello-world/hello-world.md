@@ -1,4 +1,4 @@
-Occasionally I find something interesting worth sharing. But there is no ideal
+Occasionally, I find something interesting worth sharing. But there is no ideal
 place where I can write it down, so I decided to create such place.
 
 There are a lot of blog platforms around. But I usually don't quite like some
@@ -6,12 +6,12 @@ little details about them. I wanted something self-hosted, fast (in case I'll
 write something that will be on the Hacker News front page), simple and easy to
 maintain.
 
-Once, I found a [Telegra.ph][1] publishing tool, which is pretty nice, but
+Once, I found the [Telegra.ph][1] publishing tool, which is pretty nice, but
 isn't self-hosted. So, I figured, maybe I can build something similar myself.
 
 ## Requirements
 
-Here is the list of requirements, I had in mind, when was thinking about what I
+Here is the list of requirements I had in mind, when was thinking about what I
 want to see at the end. I wouldn't even call them requirements, to be honest,
 more like guiding principles.
 
