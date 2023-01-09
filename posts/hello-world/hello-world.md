@@ -1,5 +1,5 @@
 Occasionally, I find something interesting worth sharing. But there is no ideal
-place where I can write it down, so I decided to create such place.
+place where I can write it down, so I decided to create such a place.
 
 There are a lot of blog platforms around. But I usually don't quite like some
 little details about them. I wanted something self-hosted, fast (in case I'll
@@ -11,23 +11,23 @@ isn't self-hosted. So, I figured, maybe I can build something similar myself.
 
 ## Requirements
 
-Here is the list of requirements I had in mind, when was thinking about what I
-want to see at the end. I wouldn't even call them requirements, to be honest,
+Here is the list of requirements I had in mind, when I was thinking about what
+I want to see at the end. I wouldn't even call them requirements, to be honest,
 more like guiding principles.
 
 ### Own Everything
 
 The biggest thing I don't like about existing blog and publishing tools is I
 don't own and don't have a complete control for everything, starting from the
-domain name and ending with how URLs for posts will look like. This wish
-motivated by the fact I want to have stable URLs, that will not break in the
+domain name and ending with how URLs for posts will look like. This wish is
+motivated by the fact I want to have stable URLs that will not break in the
 future.
 
 Moreover, I want to control the platform itself. This way it will last as long
-as I have a desire to support it and won't be shutdown, because of big company
-priorities shift. And there will be no unexpected policies additions that may
+as I have a desire to support it and won't be shut down, because big company
+priorities shift. And there will be no unexpected policy additions that may
 cause content to be removed or changed. Not that I'm going to post anything
-controversial. But the concept of controversial rather blurry nowadays.
+controversial. But the concept of controversy is rather blurry nowadays.
 
 ### Speed
 
@@ -39,16 +39,16 @@ a good strategy for me.
 ### Format
 
 I was thinking about a format for some time. I like LaTeX. A lot. Also, this
-would save me completely from the web design (I don't know how to do a CSS
+would save me completely from web design (I don't know how to do a CSS
 properly for example).
 
 But I am going to write primarily about computers with some code and to my
-shame for all this years I still didn't figure out a way how to make code look
+shame for all these years I still didn't figure out a way to make code look
 at least bearable. Besides, I am not sure it is convenient enough to read
 something from the PDF. Of course, if you are going to read a research paper
 (this process will probably take a couple of weeks), then maybe, but not for
 some random text you just found on the Internet and not even sure you are
-interested in. I heard HTML is a right format for the Internet stuff, so HTML
+interested in. I heard HTML is the right format for the Internet stuff, so HTML
 it is. Probably, one day I'll figure out a way to generate good looking PDFs
 and HTML pages at the same time, but not today.
 
@@ -57,12 +57,12 @@ and HTML pages at the same time, but not today.
 So far probably every mature static site generator would be a good fit for me.
 I started playing with [Hugo][2]. But then I found this [Twitter][3] thread from
 Dan Luu, which decreased my enthusiasm for Hugo, because I hate fixing stuff,
-especially one I didn't break myself. Likely, situation already changed, but
-there is no guarantee there will be no other breaking changes in the future.
+especially one I didn't break myself. Likely, the situation has already changed,
+but there is no guarantee there will be no other breaking changes in the future.
 
 ## Design
 
-After I take a look on the list of the requirements, I decided to reinvent the
+After I took a look at the list of the requirements, I decided to reinvent the
 wheel and write my own static site generator, tailored exactly for my needs.
 
 I want to publish some text content and I am going to need the following to make
@@ -72,22 +72,23 @@ it usable.
 2. List of already published content.
 3. Pages with a content itself.
 
-Separate web page for content publishing sounds cool, but looks like unnecessary
-thing to have. I can use the usual text editor of my choice to write text,
-manually regenerate content and push update to the server. I am too lazy to
-write HTML by hands, so Markdown seems like a reasonable tool for this job.
+Separate web page for content publishing sounds cool, but looks like an
+unnecessary thing to have. I can use the usual text editor of my choice to
+write text, manually regenerate content and push updates to the server. I am
+too lazy to write HTML by hand, so Markdown seems like a reasonable tool for
+this job.
 
 The picture is slowly coming together. I am going to have a bunch of Markdown
 files with content, then HTML pages will be generated out of this files and as
-a last step, everything will be pushed to serving server. Code for content
-generation and raw content itself can be stored together in version control
+a last step, everything will be pushed to the server. Code for content
+generation and raw content itself can be stored together in the version control
 system.
 
 One more thing to think about is a directory structure. I don't want to
 have only text in the post. Sometimes there will be pictures (I hope). So, I
 need a place to store them. Naming is a hard thing to do and over time I'll
-for sure will have a few files with the short name like `algorithm.png`, but
-with a different content. To avoid collisions and to save myself from future
+for sure have a few files with the short name like `algorithm.png`, but with
+a different content. To avoid collisions and to save myself from future
 pain, it is better to store pictures for each post separately.
 
 ```
@@ -114,15 +115,16 @@ metadata and content separation.
 Separation idea has some advantages.
 
 * Simpler implementation. I don't need to wrangle with text replacement.
-* No need to open and parse heavy file with content to extract required fields.
+* No need to open and parse heavy files with content to extract required fields.
 
-One of the disadvantages is necessity of two files editing for post creation.
-Over time, it will become clearer how much inconvenience this will bring.
+One of the disadvantages is the necessity of two files editing for post
+creation. Over time, it will become clearer how much inconvenience this will
+bring.
 
 
 ## Implementation
 
-The plan was to implement the following pipeline, which (I believe) is a quite
+The plan was to implement the following pipeline, which (I believe) is quite
 common for static sites at the moment.
 
 ```
@@ -153,11 +155,11 @@ Remote server:                                           |
        User
 ```
 
-At this picture steps (1), (2), (3) are preparation steps to write, generate
+In this picture steps (1), (2), (3) are preparation steps to write, generate
 and sync content with a remote server and step (4) is a step to serve the
 site content to the happy user.
 
-Almost all building blocks on this diagram are fairly common and well know
+Almost all building blocks on this diagram are fairly common and well known
 tools. The only one custom component is a Generator (from Markdown to HTML)
 itself. It took less than 200 lines to implement desired logic with [Jinja][4]
 as a template engine and [Markdown][5] library for markup support.
@@ -176,7 +178,7 @@ Only one thing made me worry - CSS and design overall. I want to have something
 simple, with a focus on the content itself. Luckily, I found Herman Martinus
 [Bear Blog][6]. It looks quite similar to what I want to have at the beginning
 (see Telegra.ph text example [here][7]). I used Bear Blog Cascading Style
-Sheets as a starting point, made couple of "improvements" here and there,
+Sheets as a starting point, made a couple of "improvements" here and there,
 removed things I don't understand and voilà.
 
 The last thing I added was a feature to fire up a web server on localhost with
@@ -187,12 +189,12 @@ If you are interested in details, you can find the source code on [Github][8].
 
 ## Future Work
 
-One thing I want to have and really missing comparing with real blog platforms
+One thing I want to have and really missing compared with real blog platforms
 is some kind of statistics, at least the basic one: how often some page was
-viewed, how much unique visitors I had and where they are coming from.
+viewed, how many unique visitors I had and where they are coming from.
 
 I believe some (if not all) of this information can be extracted from the Nginx
-access logs, but I didn't come up with a good solution for this problem yet.
+access logs, but I haven't come up with a good solution for this problem yet.
 
 
 [1]: https://telegra.ph
