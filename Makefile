@@ -12,8 +12,8 @@ server: remote
 	python3 -m http.server --directory remote
 
 deploy: remote
-	rsync -avzP --delete remote/ sun:/var/www/blog.ilvokhin.com/
-	ssh sun -- chown -R d:http /var/www/blog.ilvokhin.com/
+	rsync -avzP --delete remote/ blog.ilvokhin.com:/var/www/blog.ilvokhin.com/
+	ssh blog.ilvokhin.com -- chown -R d:http /var/www/blog.ilvokhin.com/
 
 clean:
 	rm -rf remote
