@@ -63,6 +63,7 @@ class Post(object):
         content = render.to_html(md)
         rendered = self.template.render(title=self.metadata.title,
                                         date=self.metadata.date,
+                                        status=self.metadata.status,
                                         content=content)
         render.write_file_content(os.path.join(workdir, "index.html"),
                                   rendered)

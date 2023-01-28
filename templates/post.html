@@ -20,9 +20,14 @@
 
 <main>
 <h1>{{ title }}</h1>
-<p><i><time datetime="{{ date }}" pubdate>
-{{ date }}
-</time></i></p>
+<p>
+    <i><time datetime="{{ date }}" pubdate>
+    {{ date }}
+    </time></i>
+{% if status == "draft" %}
+• {{ status }}
+{% endif %}
+</p>
 
 <content>
     {{ content|safe }}
