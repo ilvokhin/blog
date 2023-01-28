@@ -5,7 +5,7 @@ CODE := $(shell find blog -name '*.py' 2> /dev/null)
 
 .PHONY: clean server
 
-remote: $(TEMPLATES) $(SHARE) $(POSTS)
+remote: $(TEMPLATES) $(SHARE) $(POSTS) $(CODE)
 	python3 blog/blog.py
 
 server: remote
