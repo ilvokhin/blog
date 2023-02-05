@@ -2,27 +2,37 @@ import os
 import shutil
 import datetime
 import functools
+from typing import Dict
+
+from jinja2 import Template
 
 import render
 
 
 class Metadata(object):
     __slots__ = ("title", "date", "status")
+    title: str
+    date: str
+    status: str
 
-    def __init__(self, title, date, status):
+    def __init__(self, title: str, date: str, status: str) -> None:
         self.title = title
         self.date = date
         self.status = status
 
 
 class Post(object):
-    def __init__(self, template, directory):
+    template: Template
+    directory: str
+    name: str
+
+    def __init__(self, template: Template, directory: str) -> None:
         self.template = template
         self.directory = directory
         self.name = os.path.basename(directory)
 
     @staticmethod
-    def _load_raw_metadata(filename):
+    def _load_raw_metadata(filename: str) -> Dict[str, str]:
         data = {}
 
         with open(filename) as f:
@@ -33,7 +43,7 @@ class Post(object):
         return data
 
     @functools.cached_property
-    def metadata(self):
+    def metadata(self) -> Metadata:
         raw = Post._load_raw_metadata(os.path.join(self.directory,
                                                    "metadata.txt"))
 
@@ -43,7 +53,7 @@ class Post(object):
 
         return Metadata(title, date, status)
 
-    def generate(self, basedir):
+    def generate(self, basedir: str) -> None:
         postdir = os.path.basename(self.directory)
         workdir = os.path.join(basedir, postdir)
         os.makedirs(workdir)

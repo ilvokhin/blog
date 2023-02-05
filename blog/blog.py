@@ -4,27 +4,28 @@
 import os
 import shutil
 import argparse
+from typing import List
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
 
 from post import Post
 from feed import Feed
 
 
-def recreate_workdir(basedir):
+def recreate_workdir(basedir: str) -> None:
     if os.path.exists(basedir):
         shutil.rmtree(basedir)
     os.makedirs(basedir)
 
 
-def find_posts(template, basedir):
+def find_posts(template: Template, basedir: str) -> List[Post]:
     posts = []
     for subdir in os.listdir(basedir):
         posts.append(Post(template, os.path.join(basedir, subdir)))
     return posts
 
 
-def copy_share(workdir):
+def copy_share(workdir: str) -> None:
     for filename in os.listdir("share"):
         source = os.path.join("share", filename)
         destination = os.path.join(workdir, filename)
@@ -32,7 +33,7 @@ def copy_share(workdir):
         shutil.copy(source, destination)
 
 
-def generate_blog():
+def generate_blog() -> None:
     env = Environment(loader=FileSystemLoader(searchpath="templates"),
                       autoescape=select_autoescape())
 
@@ -51,7 +52,7 @@ def generate_blog():
     copy_share(workdir)
 
 
-def main():
+def main() -> None:
     generate_blog()
 
 
