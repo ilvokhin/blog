@@ -5,9 +5,11 @@ CODE := $(shell find blog -name '*.py' 2> /dev/null)
 
 .PHONY: clean server format
 
-remote: $(TEMPLATES) $(SHARE) $(POSTS) $(CODE)
-	mypy --strict blog
+remote: $(TEMPLATES) $(SHARE) $(POSTS) $(CODE) typecheck
 	python3 blog/blog.py
+
+typecheck: $(CODE)
+	mypy --strict blog
 
 format: $(CODE)
 	pycodestyle $(CODE)
