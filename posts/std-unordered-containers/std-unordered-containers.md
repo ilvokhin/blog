@@ -73,8 +73,8 @@ The actual `_Value` type is wrapped into `__gnu_cxx::__aligned_buffer` (thin
 wrapper around `std::aligned_storage`) [to decouple memory allocation from
 actual object creation][6].
 
-The [next struct][7] is `_Hash_node_code_cache` and it implements hash value cache
-logic.
+The [next struct][7] is `_Hash_node_code_cache` and it implements hash value
+caching logic.
 
 ```
 template<bool _Cache_hash_code>
@@ -86,10 +86,10 @@ template<>
   { std::size_t  _M_hash_code; };
 ```
 
-`_Hash_node_code_cache` leverages template specialization mechanism to extend
-struct by additional `_M_hash_code` field. And this optimization, I believe,
-one of the reasons why the "matryoshka dolls"-like design for node structs are
-used. This way [Empty Base Optimization (EBO)][8] can be leveraged, when
+`_Hash_node_code_cache` uses template specialization mechanism to extend
+struct with an additional `_M_hash_code` field. And this optimization, I
+believe, one of the reasons why the "matryoshka dolls"-like design for node structs
+are used. This way [Empty Base Optimization (EBO)][8] can be leveraged, when
 `_Hash_node_code_cache` will be extended by inheritance. And that's exactly
 what `_Hash_node_value` [is doing][8]:
 
@@ -123,9 +123,104 @@ what's going on.
 
 ![](libstdcpp-hash-node-layout.png "libstdc++ _Hash_node data layout")
 
+Summarizing, `_Hash_node` (directly or inherited from base structs) contains
+the following data.
+
+1. `_Hash_node_base* _M_nxt` is a pointer to the next element in the linked list
+   of hash table elements.
+2. `__gnu_cxx::__aligned_buffer<_Value> _M_storage` — node data itself. For
+   example for `std::unordered_map<std::string, int>` container `_Value` template
+   argument is `std::pair<const std::string, int>`.
+3. `std::size_t _M_hash_code` optional cached value of key's hash.
+
+#### Hash table
+
+`_Hashtable` class [defined][10] in the following way (I replaced type aliases
+with actual types being used to simplify code reading):
+
+* `__buckets_ptr` -> `_Hash_node_base**`,
+* `size_type` -> `std::size_t`,
+* `__node_base` -> `_Hash_node_base`,
+* `__node_base_ptr` -> `_Hash_node_base*`.
+
+```
+template<<...>>
+  class _Hashtable
+  <...>
+  {
+    private:
+      _Hash_node_base**     _M_buckets          = &_M_single_bucket;
+      std::size_t           _M_bucket_count     = 1;
+      _Hash_node_base       _M_before_begin;
+      std::size_t           _M_element_count    = 0;
+      _RehashPolicy         _M_rehash_policy;
+    
+      <...>                   
+       _Hash_node_base*     _M_single_bucket    = nullptr;
+  };
+```
+
+The `_Hashtable` class itself is a combination of
+`std::forward_list<_Hash_node>` containing the elements and
+`std::vector<std::forward_list<_Hash_node>::iterator>` representing the buckets
+([code comment][11]).
+
+`_Hash_node_base** _M_buckets` is an array of pointers to hash table nodes. You
+can think of it as `_Hash_node_base* _M_buckets[]` instead of pointer to a
+pointer.
+
+`_Hash_node_base _M_before_begin` is a special sentinel node without any user
+data. This node stores pointer to the first hash table element (if there is
+any) in `_M_before_begin._M_nxt`.
+
+An interesting thing is that `_M_buckets` contains `_Hash_node_base*`
+instead of `_Hash_node*`. The reason is because `_M_buckets` is kind of a
+storage for two types of objects: actual hash table nodes and a special
+sentinel «before begin node» (`_M_before_begin`). Invariant is each bucket
+stores pointer to the node **before** first node from the bucket. Meaning,
+bucket containing first element of table is actually stores address of the
+sentinel element (`&_M_before_begin`). I hope it became clearer with an
+example.
+
+Suppose we have a following code. We create `std::unordered_map` and insert
+four keys in this order: 14, 25, 36, 19.
+
+```
+std::unordered_map<int, int> map;
+
+map[14] = 14;
+map[25] = 25;
+map[36] = 36;
+map[19] = 19;
+```
+
+Then the internal `_Hashtable` linked list will look like one on the picture
+below ([original](libstdcpp-hashtable-linked-list.png)). Keys order in the hash
+table is a reverse insertion order, so keys iteration order will be:
+19, 36, 25, 14.
+
+![](libstdcpp-hashtable-linked-list.png "_Hashtable internal linked list")
 
 
-[1]: https://github.com/gcc-mirror/gcc/blob/7a0cbaf7f802df209840d78740ffc749dadd1ce3/libstdc%2B%2B-v3/include/bits/hashtable.h#L177-L1153
+Let's make a real hash table from the linked list and add
+buckets ([original](libstdcpp-hashtable-layout.png)).
+
+![](libstdcpp-hashtable-layout.png "libstdc++ _Hashtable data layout")
+
+There are 11 buckets in the picture (stack of horizontal rectangles), only two
+buckets are not empty: bucket #3 (keys 36, 25 and 14) and bucket #8 (key 19).
+Thin arrows are pointers from the `_Hashtable` internal linked list from the
+previous picture, this time slightly rearranged and grouped together by
+buckets. Now you can probably understand better what I meant by phrase «each
+bucket stores pointer to the node before first node from the bucket».
+Bucket #3 has keys 36, 25 and 14, but a `_Hash_node_base*` from `_M_buckets`
+array point to the element with a key 19, which a **previous** element in the
+hash table iteration order. Same logic is true for the bucket #3. For this
+bucket `_M_buckets` array has a pointer to the `_M_before_begin` sentinel node.
+
+
+
+[1]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L177-L1153
 [2]: https://stackoverflow.com/a/228797/1313516
 [3]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L110-L168
 [4]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L301-L316
@@ -134,3 +229,5 @@ what's going on.
 [7]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L347-L359
 [8]: https://en.cppreference.com/w/cpp/language/ebo
 [9]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L361-L365
+[10]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L386-L399
+[11]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L123-L126
