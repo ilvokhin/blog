@@ -52,7 +52,7 @@ simpler to more complex).
 `_Hash_node_base` [defined][4] in the following way. It has only `_M_nxt`
 field, which is a pointer to the next node of the hash table. 
 
-```
+```cpp
 struct _Hash_node_base
 { 
   _Hash_node_base* _M_nxt;
@@ -65,7 +65,7 @@ The next one ` _Hash_node_value_base` is a little bit more interesting
 (see code [here][5]). `_Hash_node_value_base` has a `_Value` template
 parameter which is a actual data stored in the container.
 
-```
+```cpp
 template<typename _Value>
   struct _Hash_node_value_base
   {
@@ -84,7 +84,7 @@ creation.
 The [next struct][7] is `_Hash_node_code_cache` and it implements hash value
 caching logic (more about it later).
 
-```
+```cpp
 template<bool _Cache_hash_code>
   struct _Hash_node_code_cache
   { };
@@ -101,7 +101,7 @@ are used. This way [Empty Base Optimization (EBO)][8] can be leveraged, when
 `_Hash_node_code_cache` will be extended by inheritance. And that's exactly
 what `_Hash_node_value` [is doing][8]:
 
-```
+```cpp
 template<typename _Value, bool _Cache_hash_code>
   struct _Hash_node_value
   : _Hash_node_value_base<_Value>
@@ -116,7 +116,7 @@ true as `_Hash_node_code_cache` will be an empty struct.
 The final piece of the puzzle is the `_Hash_node` combining everything above
 together:
 
-```
+```cpp
 template<typename _Value, bool _Cache_hash_code>
   struct _Hash_node
   : _Hash_node_base
@@ -151,7 +151,7 @@ with actual types being used to simplify code reading):
 * `__node_base` -> `_Hash_node_base`,
 * `__node_base_ptr` -> `_Hash_node_base*`.
 
-```
+```cpp
 template<<...>>
   class _Hashtable
   <...>
@@ -193,7 +193,7 @@ example.
 Suppose we have a following code. We create `std::unordered_map` and insert
 four keys in this order: 14, 25, 36, 19.
 
-```
+```cpp
 std::unordered_map<int, int> map;
 
 map[14] = 14;
@@ -237,7 +237,7 @@ Currently `std::hash` is [fast by default][26] (including user defined types),
 except for `long double` and string-like types (`std::string`,
 `std::string_view`).
 
-```
+```cpp
 template<typename _Hash>
 struct __is_fast_hash : public std::true_type
 { };
@@ -263,7 +263,7 @@ well. All of that in exchange for 8 more bytes of memory to store a hash value
 As a side note I want to mention that for integer types `std::hash`
 [defined][16] as an [identity function][17], which is indeed fast.
 
-```
+```cpp
 #define _Cxx_hashtable_define_trivial_hash(_Tp) 	\
   template<>						\
     struct hash<_Tp> : public __hash_base<size_t, _Tp>  \
@@ -289,7 +289,7 @@ High levels steps are the following.
 The implementation is in the `_M_insert_unique` [method][13]. And there is
 a surprise from the very first line of the code.
 
-```
+```cpp
 if (size() <= __small_size_threshold())
   for (auto __it = begin(); __it != end(); ++__it)
     if (this->_M_key_equals_tr(__k, *__it._M_cur))
@@ -300,7 +300,7 @@ If the hash table is «small» we just iterate from the beginning to the end and
 compare all the keys already in the hash table with a key we are trying to
 insert. Thresholds for «fast» and «slow» hash functions are [different][18].
 
-```
+```cpp
 template<typename _Hash>
 struct _Hashtable_hash_traits
 { 
@@ -314,7 +314,7 @@ Then, we generate a hash code from a search key and try to find if there is a
 node in the hash table, but only for «big» hash tables, as we already did a
 linear search for «small» ones.
 
-```
+```cpp
 __hash_code __code = this->_M_hash_code_tr(__k);
 size_type __bkt = _M_bucket_index(__code);
 
@@ -326,7 +326,7 @@ if (size() > __small_size_threshold())
 And finally, if there is no such key in the hash table, we create a new node
 and insert it into the data structure.
 
-```
+```cpp
 _Scoped_node __node {
   __node_builder_t::_S_build(std::forward<_Kt>(__k),
                  std::forward<_Arg>(__v),
@@ -343,7 +343,7 @@ Actual insertion logic is hidden inside `_M_insert_unique_node` [method][19].
 There we decide if hash table requires a rehash and insert a node into the
 beginning of the bucket.
 
-```
+```cpp
   const __rehash_state& __saved_state = _M_rehash_policy._M_state();
   std::pair<bool, std::size_t> __do_rehash
 = _M_rehash_policy._M_need_rehash(_M_bucket_count, _M_element_count,
@@ -374,7 +374,7 @@ number of buckets in the hash table is a [prime number][20].
 hash tables with «slow» hash function we will [do a linear search first][21],
 otherwise do a usual [bucket search][22].
 
-```
+```cpp
 __hash_code __code = this->_M_hash_code(__k);
 std::size_t __bkt = _M_bucket_index(__code);
 return const_iterator(_M_find_node(__bkt, __k, __code));
@@ -382,7 +382,7 @@ return const_iterator(_M_find_node(__bkt, __k, __code));
 
 `_M_find_node` is implemented through the call to `_M_find_before_node`.
 
-```
+```cpp
   __node_ptr
   _M_find_node(size_type __bkt, const key_type& __key,
        __hash_code __c) const
@@ -403,7 +403,7 @@ interesting things in the sleeve.
 
 We [locate][23] pointer to the element before the bucket begin.
 
-```
+```cpp
   __node_base_ptr __prev_p = _M_buckets[__bkt];
   if (!__prev_p)
 return nullptr;
@@ -411,7 +411,7 @@ return nullptr;
 
 And [iterate][25] through elements in the bucket.
 
-```
+```cpp
   for (__node_ptr __p = static_cast<__node_ptr>(__prev_p->_M_nxt);;
    __p = __p->_M_next())
 { 
@@ -428,7 +428,7 @@ There is no stop condition in the `for` loop statement itself, but only in the
 loop body. We will stop either when there is no next element in the hash table
 linked list or we are done with a current bucket.
 
-```
+```cpp
 if (!__p->_M_nxt || _M_bucket_index(*__p->_M_next()) != __bkt)
     break;
 ```
@@ -446,7 +446,7 @@ Well, back to `_M_find_before_node`, to compare search key with a key in the
 node we call `_M_equals`, [where][27] we compare hash value first and if they are
 equal, then compare keys.
 
-```
+```cpp
 bool
 _M_equals(const _Key& __k, __hash_code __c,
 const _Hash_node_value<_Value, __hash_cached::value>& __n) const
@@ -459,7 +459,7 @@ compare key hash with a hash in the node. If there is [no cached hash
 value][29], we do nothing. Think about integer keys for example. We know
 `std::hash<int>{x} == x`, so there is no point in comparing hashes first.
 
-```
+```cpp
 static bool
 _S_equals(__hash_code __c, const _Hash_node_code_cache<true>& __n)
 { return __c == __n._M_hash_code; }
