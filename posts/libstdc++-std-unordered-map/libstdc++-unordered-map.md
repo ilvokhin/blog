@@ -19,19 +19,19 @@ I'll  focus on the key/value containers with a unique set of keys
 (`std::unordered_map`), `std::unordered_set` have mostly similar logic. Multi
 keys containers are different beasts. They share a large portion of code with
 unique keys containers, but insertion and find logic is quite different, due to
-the set of stored keys is actually a multi set (allows multiple instances of the
-same key).
+the set of stored keys is actually a [multi set][34] (allows multiple instances of
+the same key).
 
 GCC's libstdc++ implementation can be found in the [hashtable.h header][1], the
 class of interest is named `_Hashtable`. There will be a lot of names with
 leading underscores. Not everyone is used to such code, but Standard Library
-implementers have no choice but [to avoid collisions with user defined names][2]
+implementers have no choice [to avoid collisions with user defined names][2]
 (macros for example). 
 
 ## Data Layout
 
-If you don't want to dive into the details too deeply, you can use [this
-comment][3] from the hashtable.h header to grasp the basics of data layout.
+If you don't want to dive into the details, you can use [this comment][3]
+from the hashtable.h header to grasp the basics of `_Hashtable` data layout.
 
 ### Nodes
 
@@ -80,7 +80,7 @@ template<typename _Value>
 creation.
 
 The [next struct][7] is `_Hash_node_code_cache` and it implements hash value
-caching logic (more about it later).
+caching logic.
 
 ```cpp
 template<bool _Cache_hash_code>
@@ -109,7 +109,7 @@ template<typename _Value, bool _Cache_hash_code>
 
 Size of the `_Hash_node_value` will be the same as size of
 `_Hash_node_value_base<_Value>` in case template argument `_Cache_hash_code` is
-true as `_Hash_node_code_cache` will be an empty struct.
+false as `_Hash_node_code_cache` will be an empty struct.
 
 The final piece of the puzzle is the `_Hash_node` combining everything above
 together:
@@ -208,7 +208,7 @@ hash table is a reverse insertion order, so key's iteration order will be:
 ![](libstdc++-hashtable-linked-list.png "_Hashtable internal linked list")
 
 
-Let's make a real hash table from the linked list and add
+Let's make a real hash table from the linked list by adding
 buckets ([original](libstdc++-hashtable-layout.png)).
 
 ![](libstdc++-hashtable-layout.png "libstdc++ _Hashtable data layout")
@@ -221,8 +221,8 @@ buckets. Now you can probably understand better what I meant by the phrase
 «each bucket stores a pointer to the node before the first node from the
 bucket». Bucket #3 has keys 36, 25 and 14, but a `_Hash_node_base*` from
 `_M_buckets` array point to the element with a key 19, which is a **previous**
-element in the hash table iteration order. Same logic is true for the bucket
-#3. For this bucket `_M_buckets` array has a pointer to the `_M_before_begin`
+element in the hash table iteration order. Same logic is true for the bucket #3.
+For this bucket `_M_buckets` array has a pointer to the `_M_before_begin`
 sentinel node.
 
 ## «Fast» and «slow» hash functions
@@ -233,7 +233,7 @@ inside the hash table node.
 
 Currently `std::hash` is [fast by default][26] (including user defined types),
 except for `long double` and string-like types (`std::string`,
-`std::string_view`).
+`std::string_view` and all other variations of character types).
 
 ```cpp
 template<typename _Hash>
@@ -245,17 +245,17 @@ struct __is_fast_hash<hash<long double>> : public std::false_type
 { };
 ```
 
-I am not sure what is the reasoning behind marking `std::hash<long double>` as
-slow (and the [commit message][15] didn't shed more light on the topic), but for
+I am not completely sure what is the reasoning behind marking `std::hash<long double>`
+as slow (and the [commit message][15] didn't shed more light on the topic), but for
 string-like types it totally makes sense.
 
-Comparison of two strings with length `n` and `m` has a `O(min(n, m))`
+Comparison of two strings with length `n` and `m` has a `O(min(n, m))` time
 complexity, but if we'll cache hash value in the hash table node, we can
 implement faster negative comparison: if hash codes of two strings do not
 match, we can instantly  conclude they are not equal. Moreover, for a `rehash`
 operation we can avoid hash recalculation for every key in the hash table as
 well. All of that in exchange for 8 more bytes of memory to store a hash value
-(`size_t`) for every node. Seems like a reasonable trade-off for me.
+(`std::size_t`) for every node. Seems like a reasonable trade-off for me.
 
 
 As a side note I want to mention that for integer types `std::hash`
@@ -276,7 +276,7 @@ is [defined][16] as an [identity function][17], which is indeed fast.
 ## Insert
 
 Now, when we know how hash table data structure is organized internally, let's
-look into the implementation of `insert` (`emplace` has a similar logic).
+look into the implementation of `insert`.
 
 High level steps are the following.
 
@@ -361,16 +361,16 @@ the beginning of the bucket.
   return iterator(__node);
 ```
 
-There is a lot of interesting stuff inside `_M_rehash_policy._M_need_rehash`,
+There is a lot of interesting things inside `_M_rehash_policy._M_need_rehash`,
 but I don't want to bore you with too many details, only mention the fact that
 the number of buckets in the hash table is a [prime number][20].
 
 
 ## Find
 
-`find` has the same optimization for small hash tables as `insert`, for «small»
-hash tables with «slow» hash function we will [do a linear search first][21],
-otherwise do a usual [bucket search][22].
+`_Hashtable::find` has the same optimization for small hash tables as `insert`,
+for «small» hash tables with «slow» hash function we will do a
+[linear search first][21], otherwise do a usual [bucket search][22].
 
 ```cpp
 __hash_code __code = this->_M_hash_code(__k);
@@ -394,7 +394,7 @@ return nullptr;
 
 `_M_find_before_node` is a good building block to have if you'll think about
 `erase` implementation as we need to remove an element from the singly linked
-lists, so having a previous node comes in handy.
+lists, so having a pointer to a previous node comes in handy.
 
 `_M_find_before_node` does mostly what we expect it to do, but has a couple of
 interesting things in the sleeve.
@@ -423,8 +423,8 @@ And [iterate][25] through elements in the bucket.
 ```
 
 There is no stop condition in the `for` loop statement itself, but only in the
-loop body. We will stop either when there is no next element in the hash table
-linked list or we are done with a current bucket.
+loop body. We will stop when there is no next element in the hash table linked
+list or we are done with a current bucket.
 
 ```cpp
 if (!__p->_M_nxt || _M_bucket_index(*__p->_M_next()) != __bkt)
@@ -472,7 +472,7 @@ _S_equals(__hash_code, const _Hash_node_code_cache<false>&)
 Last operation we need to cover to get a complete understanding of basic hash
 table operations is `erase`. As I mentioned above, from the internal
 representation point of view, nodes are connected together as a singly linked
-list, so erase operation is [similar][30] to removal from linked list.
+list, so erase operation is [similar][30] to element removal from linked list.
 
 As a first step we need to make sure the key we want to erase from the container is
 present, to simplify the code, we actually will find the node **before** the
@@ -517,8 +517,8 @@ do a search in the bucket.
 If we found something, the actual manipulations with the linked list pointers are
 done in the [overload][31] of `_M_erase` method for three arguments: `__bkt`
 (bucket), `__prev_n` (previous node in the hash table linked list) and `__n`
-(node we want to erase), where we update `_M_nxt `pointers for `__prev_n`,
-`_M_buckets` if necessary and destroy the node itself.
+(node we want to erase), where we update `_M_nxt ` pointer for `__prev_n` and
+`_M_buckets` value if necessary, then destroy the node itself.
 
 ```
   if (__prev_n == _M_buckets[__bkt])
@@ -542,16 +542,17 @@ _M_remove_bucket_begin(__bkt, __n->_M_next(),
 ## Closing thoughts
 
 There are a lot of cool tricks implemented to improve performance of
-`std::unordered_map` implementation in libstdc++. These tricks help,
+`std::unordered_map` libstdc++ implementation. These tricks help for sure,
 but the main issue of `std::unordered_map` (not only libstdc++ implementation,
-but all standard compatible ones) is cache unfriendliness. Almost every
-operation of the container is practically a textbook example of [pointer
-chasing][32], so for real word use cases performance would be not so great as
-it can be in «ideal» cases. The main problem is standard compatible implementation
-requires reference and iterator stability and this requirement forces hash
-tables to be implemented using [chaining][33]. I hope we'll find a solution for this in
-the future and bring faster hash tables in the C++ standard library, but we are
-not here yet.
+but all standard compatible ones) is cache unfriendliness.
+
+Almost every operation on the container is practically a textbook example of
+[pointer chasing][32], so for real word use cases performance would not be as great
+as it can be in «ideal» implementation from the data locality point of view. The main
+problem is standard compatible implementation requires reference and iterator stability
+and this requirement forces hash tables to be implemented using [chaining][33]. I hope
+we'll find a solution for this in the future and bring faster hash tables in the C++
+standard library, but we are not here yet.
 
 In any case, libstdc++ implementation of `std::unordered_map` is really
 awesome. I really enjoyed reading the code and learnt a lot, I hope you are
@@ -590,3 +591,4 @@ too.
 [31]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L2316-L2342
 [32]: https://en.wikichip.org/wiki/pointer_chasing
 [33]: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
+[34]: https://en.wikipedia.org/wiki/Multiset
