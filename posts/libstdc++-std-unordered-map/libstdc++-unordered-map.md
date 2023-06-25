@@ -1,7 +1,8 @@
 We all love maps. We love hash maps even more. They should be fast and
 help to solve a large number of problems. Do you ever wonder about how they are
 working under the hood? In this essay I am going to explore implementation
-details of unordered associative containers from C++ Standard Library.
+details of unordered associative containers from C++ Standard Library
+(precisely GCC's libstdc++ implementation).
 
 Currently there are four types of unordered associative containers:
 
@@ -14,7 +15,7 @@ Usually, they implemented on top of some kind of `Hashtable` container. I am
 going to jump into implementation of this `Hashtable` container directly,
 because that's where all the interesting stuff is hidden.
 
-I am going to focus more on the key/value containers with an unique set of keys
+I'll  focus on the key/value containers with an unique set of keys
 (`std::unordered_map`), `std::unordered_set` have mostly a similar logic. Multi
 keys containers are different beasts. They share a large portion of code with
 unique keys containers, but insertion and find logic is quite different, due to
@@ -22,20 +23,18 @@ set of stored keys is actually a multi set (allows multiple instances of the
 same key).
 
 
-## GCC's libstdc++ implementation
-
 GCC's libstdc++ implementation can be found in the [hashtable.h header][1], the
 class of interest is named `_Hashtable`. There are will be a lot of names with
 leading underscores. Not everyone is used to such code, but Standard Library
 implementers has no choice [to avoid collisions with user defined names][2]
 (macros for example). 
 
-### Data Layout
+## Data Layout
 
 If you don't want to dive into the details too deep, you can use [this
 comment][3] from hashtable.h header to grasp the basics of data layout.
 
-#### Nodes
+### Nodes
 
 One of the basic building blocks of the `_Hashtable` is node. Each node is
 allocated from the heap and stores containers data along with metadata
@@ -126,10 +125,10 @@ template<typename _Value, bool _Cache_hash_code>
   };
 ```
 
-Below is the picture ([original](libstdcpp-hash-node-layout.png)) of `_Hash_node` struct
+Below is the picture ([original](libstd++-hash-node-layout.png)) of `_Hash_node` struct
 data layout to better visualize what's going on.
 
-![](libstdcpp-hash-node-layout.png "libstdc++ _Hash_node data layout")
+![](libstd++-hash-node-layout.png "libstdc++ _Hash_node data layout")
 
 Summarizing, `_Hash_node` (directly or inherited from base structs) contains
 the following data.
@@ -141,7 +140,7 @@ the following data.
    argument is `std::pair<const std::string, int>`.
 3. `std::size_t _M_hash_code` optional cached value of key's hash.
 
-#### Hash table
+### Hash table
 
 `_Hashtable` class [defined][10] in the following way (I replaced type aliases
 with actual types being used to simplify code reading):
@@ -203,17 +202,17 @@ map[19] = 19;
 ```
 
 Then the internal `_Hashtable` linked list will look like one on the picture
-below ([original](libstdcpp-hashtable-linked-list.png)). Keys order in the hash
+below ([original](libstd++-hashtable-linked-list.png)). Keys order in the hash
 table is a reverse insertion order, so keys iteration order will be:
 19, 36, 25, 14.
 
-![](libstdcpp-hashtable-linked-list.png "_Hashtable internal linked list")
+![](libstd++-hashtable-linked-list.png "_Hashtable internal linked list")
 
 
 Let's make a real hash table from the linked list and add
-buckets ([original](libstdcpp-hashtable-layout.png)).
+buckets ([original](libstd++-hashtable-layout.png)).
 
-![](libstdcpp-hashtable-layout.png "libstdc++ _Hashtable data layout")
+![](libstd++-hashtable-layout.png "libstdc++ _Hashtable data layout")
 
 There are 11 buckets in the picture (vertical stack of rectangles), only two
 buckets are not empty: bucket #3 (keys 36, 25 and 14) and bucket #8 (key 19).
@@ -226,8 +225,7 @@ array point to the element with a key 19, which a **previous** element in the
 hash table iteration order. Same logic is true for the bucket #3. For this
 bucket `_M_buckets` array has a pointer to the `_M_before_begin` sentinel node.
 
-
-### «Fast» and «slow» hash functions
+## «Fast» and «slow» hash functions
 
 GCC's libstdc++ hash table implementation distinguish between fast and slow
 hash functions. If hash function is slow, then hash code will be cached
@@ -257,7 +255,7 @@ implement faster negative comparison: if hash codes of two strings do not
 match, we can instantly  conclude they are not equal. Moreover, for a `rehash`
 operation we can avoid hash recalculation for every key in the hash table as
 well. All of that in exchange for 8 more bytes of memory to store a hash value
-(`size_t`) for every node. Seems like a reasonable trade off for me.
+(`size_t`) for every node. Seems like a reasonable trade-off for me.
 
 
 As a side note I want to mention that for integer types `std::hash`
@@ -275,7 +273,7 @@ As a side note I want to mention that for integer types `std::hash`
 ```
 
 
-### Insert
+## Insert
 
 Now, when we know how hash table data structure is organized internally, let's
 look into the implementation of `insert` (`emplace` has a similar logic).
@@ -368,7 +366,7 @@ but I don't want to bore you with too much details, only mention the fact, that
 number of buckets in the hash table is a [prime number][20].
 
 
-### Find
+## Find
 
 `find` has the same optimization for small hash tables as `insert`, for «small»
 hash tables with «slow» hash function we will [do a linear search first][21],
@@ -457,7 +455,7 @@ And at the same time, `_S_equals` have two overloads, one for node with cached
 value and one for node without hash. When node [has cached value][28], we
 compare key hash with a hash in the node. If there is [no cached hash
 value][29], we do nothing. Think about integer keys for example. We know
-`std::hash<int>{x} == x`, so there is no point in comparing hashes first.
+`std::hash<int>{}(x) == x`, so there is no point in comparing hashes first.
 
 ```cpp
 static bool
@@ -467,6 +465,76 @@ _S_equals(__hash_code __c, const _Hash_node_code_cache<true>& __n)
 static bool
 _S_equals(__hash_code, const _Hash_node_code_cache<false>&)
 { return true; }
+```
+
+## Erase
+
+Last operation we need to cover to get a complete understanding of basic hash
+table operations is `erase`. As I mentioned above, from the internal
+representation point of view, nodes are connected together as a singly linked
+list, so removal operation is [similar][30] to removal from linked list.
+
+As a first step we need to make sure key we want to erase from the container is
+present, to simplify the code, we actually will find the node **before**. There
+are again two possible paths for «small» and «big» hash tables.
+
+For «small» tables we just do a linear search in the linked list.
+
+```
+  if (size() <= __small_size_threshold())
+{
+  __prev_n = _M_find_before_node(__k);
+  if (!__prev_n)
+    return 0;
+
+  // We found a matching node, erase it.
+  __n = static_cast<__node_ptr>(__prev_n->_M_nxt);
+  __bkt = _M_bucket_index(*__n);
+}
+```
+
+And for bigger ones, we are trying to find correct bucket for the key and then
+do a search in the bucket.
+
+```
+  else
+{ 
+  __hash_code __code = this->_M_hash_code(__k);
+  __bkt = _M_bucket_index(__code);
+
+  // Look for the node before the first matching node.
+  __prev_n = _M_find_before_node(__bkt, __k, __code);
+  if (!__prev_n)
+    return 0;
+
+  // We found a matching node, erase it.
+  __n = static_cast<__node_ptr>(__prev_n->_M_nxt);
+}
+```
+
+If we found something, the actual manipulations with the linked list pointers are
+done in the [overload][31] of `_M_erase` method for three arguments (bucket,
+previous node and a node we want to erase), where we update `_M_nxt `pointers
+for `__prev_n` (previous node), `_M_buckets` if necessary and destroy the node
+itself.
+
+```
+  if (__prev_n == _M_buckets[__bkt])
+_M_remove_bucket_begin(__bkt, __n->_M_next(),
+  __n->_M_nxt ? _M_bucket_index(*__n->_M_next()) : 0);
+  else if (__n->_M_nxt)
+{
+  size_type __next_bkt = _M_bucket_index(*__n->_M_next());
+  if (__next_bkt != __bkt)
+    _M_buckets[__next_bkt] = __prev_n;
+}
+
+  __prev_n->_M_nxt = __n->_M_nxt;
+  iterator __result(__n->_M_next());
+  this->_M_deallocate_node(__n);
+  --_M_element_count;
+
+  return __result;
 ```
 
 [1]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L177-L1153
@@ -498,3 +566,5 @@ _S_equals(__hash_code, const _Hash_node_code_cache<false>&)
 [27]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L1740-L1743
 [28]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L1700-L1702
 [29]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L1691-L1693
+[30]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L2344-L2383
+[31]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L2316-L2342
