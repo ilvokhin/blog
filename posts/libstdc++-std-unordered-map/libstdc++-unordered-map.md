@@ -125,10 +125,10 @@ template<typename _Value, bool _Cache_hash_code>
   };
 ```
 
-Below is the picture ([original](libstd++-hash-node-layout.png)) of `_Hash_node` struct
+Below is the picture ([original](libstdc++-hash-node-layout.png)) of `_Hash_node` struct
 data layout to better visualize what's going on.
 
-![](libstd++-hash-node-layout.png "libstdc++ _Hash_node data layout")
+![](libstdc++-hash-node-layout.png "libstdc++ _Hash_node data layout")
 
 Summarizing, `_Hash_node` (directly or inherited from base structs) contains
 the following data.
@@ -202,17 +202,17 @@ map[19] = 19;
 ```
 
 Then the internal `_Hashtable` linked list will look like one on the picture
-below ([original](libstd++-hashtable-linked-list.png)). Keys order in the hash
+below ([original](libstdc++-hashtable-linked-list.png)). Keys order in the hash
 table is a reverse insertion order, so keys iteration order will be:
 19, 36, 25, 14.
 
-![](libstd++-hashtable-linked-list.png "_Hashtable internal linked list")
+![](libstdc++-hashtable-linked-list.png "_Hashtable internal linked list")
 
 
 Let's make a real hash table from the linked list and add
-buckets ([original](libstd++-hashtable-layout.png)).
+buckets ([original](libstdc++-hashtable-layout.png)).
 
-![](libstd++-hashtable-layout.png "libstdc++ _Hashtable data layout")
+![](libstdc++-hashtable-layout.png "libstdc++ _Hashtable data layout")
 
 There are 11 buckets in the picture (vertical stack of rectangles), only two
 buckets are not empty: bucket #3 (keys 36, 25 and 14) and bucket #8 (key 19).
@@ -513,10 +513,10 @@ do a search in the bucket.
 ```
 
 If we found something, the actual manipulations with the linked list pointers are
-done in the [overload][31] of `_M_erase` method for three arguments (bucket,
-previous node and a node we want to erase), where we update `_M_nxt `pointers
-for `__prev_n` (previous node), `_M_buckets` if necessary and destroy the node
-itself.
+done in the [overload][31] of `_M_erase` method for three arguments: bucket: `__bkt`,
+previous node: `__prev_n` and a node we want to erase: `__n`, where we update
+`_M_nxt `pointers for `__prev_n` (previous node), `_M_buckets` if necessary and
+destroy the node itself.
 
 ```
   if (__prev_n == _M_buckets[__bkt])
@@ -536,6 +536,24 @@ _M_remove_bucket_begin(__bkt, __n->_M_next(),
 
   return __result;
 ```
+
+## Closing thoughts
+
+There are a lot of cool tricks implemented to improve performance of
+`std::unordered_map` implementation in libstdc++. This tricks help,
+but the main issue of `std::unordered_map` (not only libstdc++ implementation,
+but all standard compatible ones) is cache unfriendliness. Almost every
+operation of the container is practically a text book example of [pointer
+chasing][32], so for real words use cases performance would be no so great as
+it can be in ideal case. The main problem is standard compatible implementation
+requires reference and iterator stability and this requirement forces hash table
+to be implemented using [chaining][33]. I hope, we'll find solution for this in
+the future and bring faster hash tables in the C++ standard library, but we are
+not here yet.
+
+In any case, libstdc++ implementation of `std::unordered_map` is really
+awesome, I really enjoyed reading the code and learnt a lot, I hope you are
+too.
 
 [1]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L177-L1153
 [2]: https://stackoverflow.com/a/228797/1313516
@@ -568,3 +586,5 @@ _M_remove_bucket_begin(__bkt, __n->_M_next(),
 [29]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable_policy.h#L1691-L1693
 [30]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L2344-L2383
 [31]: https://github.com/gcc-mirror/gcc/blob/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc%2B%2B-v3/include/bits/hashtable.h#L2316-L2342
+[32]: https://en.wikichip.org/wiki/pointer_chasing
+[33]: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
