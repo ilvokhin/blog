@@ -28,6 +28,23 @@ leading underscores. Not everyone is used to such code, but Standard Library
 implementers have no choice [to avoid collisions with user defined names][2]
 (macros for example). 
 
+## Policy-Based Design
+
+`_Hashtable` class implemented by decomposition into [policies][35] and closely
+recalls [GCC's Policy-Based Data Structures design][36]. Some of these policies
+are available for redefinition by the user, for example `_Alloc`, `_Equal` and
+`_Hash`. Some depend on the container type, like `_ExtractKey`, `_Value`. And
+others like `_RangeHash` and `_RehashPolicy` can be defined by library implementers
+only.
+
+```cpp
+template<typename _Key, typename _Value, typename _Alloc,
+   typename _ExtractKey, typename _Equal,
+   typename _Hash, typename _RangeHash, typename _Unused,
+   typename _RehashPolicy, typename _Traits>
+class _Hashtable
+```
+
 ## Data Layout
 
 If you don't want to dive into the details, you can use [this comment][3]
@@ -592,3 +609,5 @@ too.
 [32]: https://en.wikichip.org/wiki/pointer_chasing
 [33]: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 [34]: https://en.wikipedia.org/wiki/Multiset
+[35]: https://en.wikipedia.org/wiki/Modern_C%2B%2B_Design#Policy-based_design
+[36]: https://gcc.gnu.org/onlinedocs/libstdc++/ext/pb_ds
