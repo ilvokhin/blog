@@ -2,7 +2,8 @@ We all love maps. We love hash maps even more. They should be fast and
 help to solve a large number of problems. Do you ever wonder about how they are
 working under the hood? In this post I am going to explore implementation
 details of unordered associative containers from C++ Standard Library
-(precisely GCC's libstdc++ implementation).
+(precisely GCC's libstdc++ implementation, I'll use [b9b7981f3d][37] revision
+for code examples).
 
 Currently there are four types of unordered associative containers:
 
@@ -43,6 +44,7 @@ template<typename _Key, typename _Value, typename _Alloc,
    typename _Hash, typename _RangeHash, typename _Unused,
    typename _RehashPolicy, typename _Traits>
 class _Hashtable
+<...>
 ```
 
 ## Data Layout
@@ -192,18 +194,18 @@ The `_Hashtable` class itself is a combination of
 can think of it as `_Hash_node_base* _M_buckets[]` instead of pointer to a
 pointer.
 
-`_Hash_node_base _M_before_begin` is a special sentinel node without any user
-data. This node stores a pointer to the first hash table element (if there is
+`_Hash_node_base _M_before_begin` is a special node without any user data.
+This node stores a pointer to the first hash table element (if there is
 any) in `_M_before_begin._M_nxt`.
 
 An interesting thing is that `_M_buckets` contains `_Hash_node_base*`
 instead of `_Hash_node*`. The reason is because `_M_buckets` is kind of a
 storage for two types of objects: actual hash table nodes and a special
-sentinel «before begin node» (`_M_before_begin`). Invariant is each bucket
+«before begin node» (`_M_before_begin`). Invariant is each bucket
 stores a pointer to the node **before** the first node from the bucket.
 Meaning, the bucket containing the first element of the table actually stores
-the address of the sentinel element (`&_M_before_begin`). I hope it becomes
-clearer with an example.
+the address of the `_M_before_begin` element. I hope it becomes clearer with
+an example.
 
 Suppose we have the following code. We create `std::unordered_map` and insert
 four keys in this order: 14, 25, 36, 19.
@@ -239,8 +241,7 @@ buckets. Now you can probably understand better what I meant by the phrase
 bucket». Bucket #3 has keys 36, 25 and 14, but a `_Hash_node_base*` from
 `_M_buckets` array point to the element with a key 19, which is a **previous**
 element in the hash table iteration order. Same logic is true for the bucket #3.
-For this bucket `_M_buckets` array has a pointer to the `_M_before_begin`
-sentinel node.
+For this bucket `_M_buckets` array has a pointer to the `_M_before_begin` node.
 
 ## «Fast» and «slow» hash functions
 
@@ -359,23 +360,23 @@ There we decide if the hash table requires a rehash and insert a node into
 the beginning of the bucket.
 
 ```cpp
-  const __rehash_state& __saved_state = _M_rehash_policy._M_state();
-  std::pair<bool, std::size_t> __do_rehash
-= _M_rehash_policy._M_need_rehash(_M_bucket_count, _M_element_count,
-                  __n_elt);
+const __rehash_state& __saved_state = _M_rehash_policy._M_state();
+std::pair<bool, std::size_t> __do_rehash
+  = _M_rehash_policy._M_need_rehash(_M_bucket_count, _M_element_count,
+                                    __n_elt);
 
-  if (__do_rehash.first)
-{ 
-  _M_rehash(__do_rehash.second, __saved_state);
-  __bkt = _M_bucket_index(__code);
-}
+if (__do_rehash.first)
+  { 
+    _M_rehash(__do_rehash.second, __saved_state);
+    __bkt = _M_bucket_index(__code);
+  }
   
-  this->_M_store_code(*__node, __code);
+this->_M_store_code(*__node, __code);
     
-  // Always insert at the beginning of the bucket.
-  _M_insert_bucket_begin(__bkt, __node);
-  ++_M_element_count;
-  return iterator(__node);
+// Always insert at the beginning of the bucket.
+_M_insert_bucket_begin(__bkt, __node);
+++_M_element_count;
+return iterator(__node);
 ```
 
 There is a lot of interesting things inside `_M_rehash_policy._M_need_rehash`,
@@ -395,18 +396,18 @@ std::size_t __bkt = _M_bucket_index(__code);
 return const_iterator(_M_find_node(__bkt, __k, __code));
 ```
 
-`_M_find_node` is implemented through the call to `_M_find_before_node`.
+`_M_find_node` is [implemented][23] through the call to `_M_find_before_node`.
 
 ```cpp
-  __node_ptr
-  _M_find_node(size_type __bkt, const key_type& __key,
-       __hash_code __c) const
-  {    
-__node_base_ptr __before_n = _M_find_before_node(__bkt, __key, __c);
-if (__before_n)
-  return static_cast<__node_ptr>(__before_n->_M_nxt);
-return nullptr;
-  }
+__node_ptr
+_M_find_node(size_type __bkt, const key_type& __key,
+             __hash_code __c) const
+{    
+ __node_base_ptr __before_n = _M_find_before_node(__bkt, __key, __c);
+ if (__before_n)
+   return static_cast<__node_ptr>(__before_n->_M_nxt);
+ return nullptr;
+}
 ```
 
 `_M_find_before_node` is a good building block to have if you'll think about
@@ -416,27 +417,27 @@ lists, so having a pointer to a previous node comes in handy.
 `_M_find_before_node` does mostly what we expect it to do, but has a couple of
 interesting things in the sleeve.
 
-We [locate][23] a pointer to the element before the first bucket element.
+We [locate][24] a pointer to the element before the first bucket element.
 
 ```cpp
-  __node_base_ptr __prev_p = _M_buckets[__bkt];
-  if (!__prev_p)
-return nullptr;
+__node_base_ptr __prev_p = _M_buckets[__bkt];
+if (!__prev_p)
+  return nullptr;
 ```
 
 And [iterate][25] through elements in the bucket.
 
 ```cpp
-  for (__node_ptr __p = static_cast<__node_ptr>(__prev_p->_M_nxt);;
-   __p = __p->_M_next())
-{ 
-  if (this->_M_equals(__k, __code, *__p))
-    return __prev_p;
+for (__node_ptr __p = static_cast<__node_ptr>(__prev_p->_M_nxt);;
+     __p = __p->_M_next())
+  { 
+    if (this->_M_equals(__k, __code, *__p))
+      return __prev_p;
   
-  if (!__p->_M_nxt || _M_bucket_index(*__p->_M_next()) != __bkt)
-    break;
-  __prev_p = __p;
-}
+    if (!__p->_M_nxt || _M_bucket_index(*__p->_M_next()) != __bkt)
+      break;
+    __prev_p = __p;
+  }
 ```
 
 There is no stop condition in the `for` loop statement itself, but only in the
@@ -445,7 +446,7 @@ list or we are done with a current bucket.
 
 ```cpp
 if (!__p->_M_nxt || _M_bucket_index(*__p->_M_next()) != __bkt)
-    break;
+  break;
 ```
 
 The only way for us to understand we have crossed the bucket's boundary is to
@@ -499,36 +500,36 @@ hash tables.
 For «small» tables we just do a linear search in the linked list by calling
 `_M_find_before_node`.
 
-```
-  if (size() <= __small_size_threshold())
-{
-  __prev_n = _M_find_before_node(__k);
-  if (!__prev_n)
-    return 0;
+```cpp
+if (size() <= __small_size_threshold())
+  {
+   __prev_n = _M_find_before_node(__k);
+   if (!__prev_n)
+     return 0;
 
-  // We found a matching node, erase it.
-  __n = static_cast<__node_ptr>(__prev_n->_M_nxt);
-  __bkt = _M_bucket_index(*__n);
-}
+   // We found a matching node, erase it.
+   __n = static_cast<__node_ptr>(__prev_n->_M_nxt);
+   __bkt = _M_bucket_index(*__n);
+  }
 ```
 
 And for bigger ones, we are trying to find the correct bucket for the key and then
 do a search in the bucket.
 
-```
-  else
-{ 
-  __hash_code __code = this->_M_hash_code(__k);
-  __bkt = _M_bucket_index(__code);
+```cpp
+else
+  { 
+   __hash_code __code = this->_M_hash_code(__k);
+   __bkt = _M_bucket_index(__code);
 
-  // Look for the node before the first matching node.
-  __prev_n = _M_find_before_node(__bkt, __k, __code);
-  if (!__prev_n)
-    return 0;
+   // Look for the node before the first matching node.
+   __prev_n = _M_find_before_node(__bkt, __k, __code);
+   if (!__prev_n)
+     return 0;
 
-  // We found a matching node, erase it.
-  __n = static_cast<__node_ptr>(__prev_n->_M_nxt);
-}
+   // We found a matching node, erase it.
+   __n = static_cast<__node_ptr>(__prev_n->_M_nxt);
+  }
 ```
 
 If we found something, the actual manipulations with the linked list pointers are
@@ -537,23 +538,23 @@ done in the [overload][31] of `_M_erase` method for three arguments: `__bkt`
 (node we want to erase), where we update `_M_nxt ` pointer for `__prev_n` and
 `_M_buckets` value if necessary, then destroy the node itself.
 
-```
-  if (__prev_n == _M_buckets[__bkt])
-_M_remove_bucket_begin(__bkt, __n->_M_next(),
-  __n->_M_nxt ? _M_bucket_index(*__n->_M_next()) : 0);
-  else if (__n->_M_nxt)
-{
-  size_type __next_bkt = _M_bucket_index(*__n->_M_next());
-  if (__next_bkt != __bkt)
-    _M_buckets[__next_bkt] = __prev_n;
-}
+```cpp
+if (__prev_n == _M_buckets[__bkt])
+  _M_remove_bucket_begin(__bkt, __n->_M_next(),
+     __n->_M_nxt ? _M_bucket_index(*__n->_M_next()) : 0);
+else if (__n->_M_nxt)
+  {
+   size_type __next_bkt = _M_bucket_index(*__n->_M_next());
+   if (__next_bkt != __bkt)
+     _M_buckets[__next_bkt] = __prev_n;
+  }
 
-  __prev_n->_M_nxt = __n->_M_nxt;
-  iterator __result(__n->_M_next());
-  this->_M_deallocate_node(__n);
-  --_M_element_count;
+__prev_n->_M_nxt = __n->_M_nxt;
+iterator __result(__n->_M_next());
+this->_M_deallocate_node(__n);
+--_M_element_count;
 
-  return __result;
+return __result;
 ```
 
 ## Closing thoughts
@@ -564,7 +565,7 @@ but the main issue of `std::unordered_map` (not only libstdc++ implementation,
 but all standard compatible ones) is cache unfriendliness.
 
 Almost every operation on the container is practically a textbook example of
-[pointer chasing][32], so for real word use cases performance would not be as great
+[pointer chasing][32], so for real world use cases performance would not be as great
 as it can be in «ideal» implementation from the data locality point of view. The main
 problem is standard compatible implementation requires reference and iterator stability
 and this requirement forces hash tables to be implemented using [chaining][33]. I hope
@@ -611,3 +612,4 @@ too.
 [34]: https://en.wikipedia.org/wiki/Multiset
 [35]: https://en.wikipedia.org/wiki/Modern_C%2B%2B_Design#Policy-based_design
 [36]: https://gcc.gnu.org/onlinedocs/libstdc++/ext/pb_ds
+[37]: https://github.com/gcc-mirror/gcc/tree/b9b7981f3d6919518372daf4c7e8c40dfc58f49d/libstdc++-v3
