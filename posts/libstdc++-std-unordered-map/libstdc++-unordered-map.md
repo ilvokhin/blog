@@ -403,10 +403,10 @@ __node_ptr
 _M_find_node(size_type __bkt, const key_type& __key,
              __hash_code __c) const
 {    
- __node_base_ptr __before_n = _M_find_before_node(__bkt, __key, __c);
- if (__before_n)
-   return static_cast<__node_ptr>(__before_n->_M_nxt);
- return nullptr;
+  __node_base_ptr __before_n = _M_find_before_node(__bkt, __key, __c);
+  if (__before_n)
+    return static_cast<__node_ptr>(__before_n->_M_nxt);
+  return nullptr;
 }
 ```
 
