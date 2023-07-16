@@ -1,3 +1,7 @@
+[TOC]
+
+## Introduction
+
 We all love maps. We love hash maps even more. They should be fast and
 help to solve a large number of problems. Do you ever wonder about how they are
 working under the hood? In this post I am going to explore implementation

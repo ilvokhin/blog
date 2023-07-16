@@ -1,5 +1,7 @@
 import markdown
 
+from markdown.extensions.toc import TocExtension
+
 
 def read_file_content(filename: str) -> str:
     with open(filename) as f:
@@ -13,4 +15,5 @@ def write_file_content(filename: str, data: str) -> None:
 
 def to_html(filename: str) -> str:
     text = read_file_content(filename)
-    return markdown.markdown(text, extensions=["fenced_code", "footnotes"])
+    return markdown.markdown(text, extensions=["fenced_code", "footnotes",
+                                               TocExtension(anchorlink=True)])
