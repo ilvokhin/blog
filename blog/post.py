@@ -10,13 +10,16 @@ import render
 
 
 class Metadata(object):
-    __slots__ = ("title", "date", "status")
+    __slots__ = ("title", "author", "date", "status")
     title: str
+    author: str
     date: str
     status: str
 
-    def __init__(self, title: str, date: str, status: str) -> None:
+    def __init__(self, title: str, author: str,
+                 date: str, status: str) -> None:
         self.title = title
+        self.author = author
         self.date = date
         self.status = status
 
@@ -48,10 +51,11 @@ class Post(object):
                                                    "metadata.txt"))
 
         title = raw["Title"]
+        author = raw["Author"]
         date = raw.get("Date", datetime.date.today().strftime("%Y-%m-%d"))
         status = raw.get("Status", "draft")
 
-        return Metadata(title, date, status)
+        return Metadata(title, author, date, status)
 
     def generate(self, basedir: str) -> None:
         postdir = os.path.basename(self.directory)
@@ -72,6 +76,7 @@ class Post(object):
 
         content = render.to_html(md)
         rendered = self.template.render(title=self.metadata.title,
+                                        author=self.metadata.author,
                                         date=self.metadata.date,
                                         status=self.metadata.status,
                                         content=content)
