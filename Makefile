@@ -3,7 +3,7 @@ SHARE := $(shell find share -name '*' 2> /dev/null)
 POSTS := $(shell find posts -name '*' 2> /dev/null)
 CODE := $(shell find blog -name '*.py' 2> /dev/null)
 
-.PHONY: clean server format
+.PHONY: typecheck format server deploy clean
 
 remote: $(TEMPLATES) $(SHARE) $(POSTS) $(CODE) typecheck
 	python3 blog/blog.py
