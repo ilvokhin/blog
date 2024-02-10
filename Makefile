@@ -18,8 +18,14 @@ server: remote
 	python3 -m http.server --directory remote
 
 deploy: remote
-	rsync -avzP --delete remote/ blog.ilvokhin.com:/srv/http/blog.ilvokhin.com
-	ssh blog.ilvokhin.com -- sudo chown -R http:http /srv/http/blog.ilvokhin.com
+	rsync \
+        --recursive \
+        --compress \
+        --links \
+        --progress \
+        --delete \
+        remote/ \
+        blog.ilvokhin.com:/srv/http/blog.ilvokhin.com
 
 clean:
 	rm -rf remote
