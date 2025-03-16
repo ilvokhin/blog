@@ -14,7 +14,7 @@ $ pip3 install -r requirements.txt
 $ mkdir posts/hello-world
 $ echo 'Title: Hello, World!' > posts/hello-world/metadata.txt
 $ echo 'Date: 2022-12-23' >> posts/hello-world/metadata.txt
-$ echo 'Hello, world!' > posts/hello-world/hello-world.txt
+$ echo 'Hello, world!' > posts/hello-world/hello-world.md
 $ make deploy
 ```
 
