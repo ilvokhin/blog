@@ -49,8 +49,8 @@ on x86\_64.
 
 ## Documentation
 
-HPA is under active development and options are not described in documentation
-yet. Below is a brief description of currently available options.
+HPA is under active development and options are not described in official
+documentation yet. Below is a brief description of currently available options.
 
 ### hpa
 
