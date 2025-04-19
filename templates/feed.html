@@ -28,8 +28,8 @@
         <li>
             <span>
             <i>
-            <time datetime="{{ post.metadata.date }}" pubdate>
-            {{ post.metadata.date }}
+            <time datetime="{{ post.metadata.date.strftime('%Y-%m-%d') }}" pubdate>
+            {{ post.metadata.date.strftime('%Y-%m-%d') }}
             </time>
             </i>
             </span>
@@ -41,6 +41,9 @@
 
 </content>
 </main>
+<footer>
+    <small><p><a class="rss" href="/atom.xml">Atom / RSS</a></p><small>
+</footer>
 </body>
 
 </html>

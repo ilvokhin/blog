@@ -112,10 +112,6 @@ ul.posts li span {
 ul.posts time {
 }
 
-ul.posts li a:visited {
-    color: #8b6fcb;
-}
-
 .toclink {
     color: #222;
 }

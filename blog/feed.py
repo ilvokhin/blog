@@ -1,10 +1,11 @@
 import os
+import datetime
 from typing import List
 
 from jinja2 import Template
 
 import render
-from post import Post
+from post import Post, remove_drafts
 
 
 class Feed(object):
@@ -13,11 +14,7 @@ class Feed(object):
 
     def __init__(self, template: Template, posts: List[Post]) -> None:
         self.template = template
-        self.posts = Feed._remove_drafts(posts)
-
-    @staticmethod
-    def _remove_drafts(posts: List[Post]) -> List[Post]:
-        return list(filter(lambda x: x.metadata.status != "draft", posts))
+        self.posts = remove_drafts(posts)
 
     def generate(self, basedir: str) -> None:
         index = os.path.join(basedir, "index.html")

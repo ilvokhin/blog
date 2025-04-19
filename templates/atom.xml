@@ -1,0 +1,24 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>blog.ilvokhin.com</title>
+    <id>tag:blog.ilvokhin.com,2022:blog.ilvokhin.com</id>
+    <link rel="alternate" href="https://blog.ilvokhin.com"></link>
+    <link rel="self" href="https://blog.ilvokhin.com/atom.xml"></link>
+    <updated>{{ updated.isoformat() }}</updated>
+    <author>
+        <name>Dmitry Ilvokhin</name>
+        <uri>https://ilvokhin.com/</uri>
+        <email>d@ilvokhin.com</email>
+    </author>
+{% if posts %}
+    {% for post in posts %}
+    <entry>
+        <title>{{ post.metadata.title }}</title>
+        <id>tag:blog.ilvokhin.com,2022:blog.ilvokhin.com/{{ post.name }}</id>
+        <link rel="alternate" href="https://blog.ilvokhin.com/{{ post.name }}"></link>
+        <published>{{ post.metadata.date.isoformat() }}</published>
+        <updated>{{ post.metadata.updated.isoformat() }}</updated>
+        <content type="html">{{ post.content }}</content>
+    </entry>
+    {% endfor %}
+{% endif %}
+</feed>

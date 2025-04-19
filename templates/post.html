@@ -22,9 +22,14 @@
 <main>
 <h1>{{ title }}</h1>
 <p>
-    <i><time datetime="{{ date }}" pubdate>
-    {{ date }}
-    </time></i>
+    <i>
+    <time datetime="{{ date.strftime('%Y-%m-%d') }}" pubdate>
+        {{ date.strftime('%Y-%m-%d') }}
+    </time>
+    {% if date != updated %}
+    (updated <time datetime="{{ updated.strftime('%Y-%m-%d') }}">{{ updated.strftime('%Y-%m-%d') }}</time>)
+    {% endif %}
+    </i>
 {% if status == "draft" %}
 • {{ status }}
 {% endif %}

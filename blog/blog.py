@@ -10,6 +10,7 @@ from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
 
 from post import Post
 from feed import Feed
+from atom import Atom
 
 
 def recreate_workdir(basedir: str) -> None:
@@ -48,6 +49,9 @@ def generate_blog() -> None:
 
     feed = Feed(env.get_template("feed.html"), posts)
     feed.generate(workdir)
+
+    atom = Atom(env.get_template("atom.xml"), posts)
+    atom.generate(workdir)
 
     copy_share(workdir)
 
