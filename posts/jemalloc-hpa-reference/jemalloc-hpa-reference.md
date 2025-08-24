@@ -9,9 +9,8 @@ application performance.
 ### Pageslab
 
 Pageslab is hugepage aligned and sized memory range. You can think of it as a
-set of pages packed together into a hugepage. Pageslab is not necessary backed
-up by a hugepage.
-
+set of pages packed together into a hugepage. Pageslab is not necessarily
+backed up by a hugepage.
 
 ### Active Page
 
@@ -81,9 +80,9 @@ Maximum value: `HUGEPAGE` bytes.
 Minimum number of active bytes in a pageslab necessary for pageslab to be
 placed into hugification queue.
 
-Pageslab always produced in a non-huge state. Over time, when number of active
-bytes became greater or equal than `hpa_hugification_threshold`, jemalloc puts
-pageslab into hugification queue.
+Pageslab is always produced in a non-huge state. Over time, when the number of
+active bytes becames greater or equal than `hpa_hugification_threshold`,
+jemalloc puts pageslab into the hugification queue.
 
 Unsigned integer. Default value: `0.95 * HUGEPAGE` bytes. Minimum value: `PAGE`
 bytes. Maximum value: `HUGEPAGE` bytes.
@@ -121,8 +120,8 @@ Use `madvise(..., MADV_COLLAPSE)` to request OS back up pageslab by a hugepage
 alongside `madvise(..., MADV_HUGEPAGE)`. Increments
 `stats.arenas.<i>.hpa_shard.nhugify_failures` counter on failure.
 
-Usual asynchronous hugification introduces delay of unknown length, between
-request to OS has been made to hugify a pageslab and OS actually backs up
+Usually asynchronous hugification introduces delay of unknown length, between
+request to the OS being made to hugify a pageslab and the OS actually backs up
 pageslab by a hugepage. This option allows to eliminate this delay. Requires
 Linux 6.1 or higher. 
 
@@ -133,10 +132,10 @@ Boolean. Default value: `false`.
 Minimum time between two consecutive purge phases in milliseconds.
 
 Each `hpa_min_purge_interval_ms` jemalloc will check if purging criteria are
-met and if they are, it will purge as much pageslabs as needed until purging
+met and if they are, it will purge as many pageslabs as needed until purging
 criteria are no longer met. Minimal unit of purging is pageslab, meaning all
-dirty pages will be returned back to the OS from chosen pageslab, even if less
-pages required to be purged to reach purging target. If there are few
+dirty pages will be returned back to the OS from chosen pageslab, even if fewer
+pages are required to be purged to reach purging target. If there are few
 consecutive dirty pages, one syscall will be issued to purge them together in
 one go.
 
@@ -180,8 +179,8 @@ when `hpa_peak_demand_window_ms` is set to `0`, then `npeak` equals to
 
 Option `hpa_dirty_mult` works in combination with `hpa_peak_demand_window_ms`.
 
-Fixed-point fractional or `-1`. Default value is `0.25` (not a great default).
-When set to `-1` disables purging completely.
+Fixed-point fractional or `-1`. The default value is `0.25` (not a great
+default).  When set to `-1` disables purging completely.
 
 ### hpa_sec_nshards
 
