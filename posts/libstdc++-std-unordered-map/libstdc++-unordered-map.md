@@ -298,7 +298,7 @@ is [defined][16] as an [identity function][17], which is indeed fast.
 ## Insert
 
 Now, when we know how hash table data structure is organized internally, let's
-look into the implementation of `insert`.
+look into the implementation of `insert()`.
 
 High level steps are the following.
 
@@ -306,8 +306,8 @@ High level steps are the following.
 2. Create a hash table node.
 3. Insert a new node to a hash table data structure.
 
-The implementation is in the `_M_insert_unique` [method][13]. And there is
-a surprise from the very first line of the code.
+The implementation is in the `_M_insert_unique()` [method][13]. And there is a
+surprise from the very first line of the code.
 
 ```cpp
 if (size() <= __small_size_threshold())
@@ -359,9 +359,9 @@ __node._M_node = nullptr;
 return { __pos, true };
 ```
 
-Actual insertion logic is hidden inside `_M_insert_unique_node` [method][19].
-There we decide if the hash table requires a rehash and insert a node into
-the beginning of the bucket.
+Actual insertion logic is hidden inside `_M_insert_unique_node()` [method][19].
+There we decide if the hash table requires a rehash and insert a node into the
+beginning of the bucket.
 
 ```cpp
 const __rehash_state& __saved_state = _M_rehash_policy._M_state();
@@ -383,15 +383,16 @@ _M_insert_bucket_begin(__bkt, __node);
 return iterator(__node);
 ```
 
-There is a lot of interesting things inside `_M_rehash_policy._M_need_rehash`,
-but I don't want to bore you with too many details, only mention the fact that
-the number of buckets in the hash table is a [prime number][20].
+There is a lot of interesting things inside
+`_M_rehash_policy._M_need_rehash()`, but I don't want to bore you with too many
+details, only mention the fact that the number of buckets in the hash table is
+a [prime number][20].
 
 
 ## Find
 
-`_Hashtable::find` has the same optimization for small hash tables as `insert`,
-for «small» hash tables with «slow» hash function we will do a
+`_Hashtable::find()` has the same optimization for small hash tables as
+`insert()`, for «small» hash tables with «slow» hash function we will do a
 [linear search first][21], otherwise do a usual [bucket search][22].
 
 ```cpp
@@ -400,7 +401,8 @@ std::size_t __bkt = _M_bucket_index(__code);
 return const_iterator(_M_find_node(__bkt, __k, __code));
 ```
 
-`_M_find_node` is [implemented][23] through the call to `_M_find_before_node`.
+`_M_find_node()` is [implemented][23] through the call to
+`_M_find_before_node()`.
 
 ```cpp
 __node_ptr
@@ -414,12 +416,12 @@ _M_find_node(size_type __bkt, const key_type& __key,
 }
 ```
 
-`_M_find_before_node` is a good building block to have if you'll think about
-`erase` implementation as we need to remove an element from the singly linked
+`_M_find_before_node()` is a good building block to have if you'll think about
+`erase()` implementation as we need to remove an element from the singly linked
 lists, so having a pointer to a previous node comes in handy.
 
-`_M_find_before_node` does mostly what we expect it to do, but has a couple of
-interesting things in the sleeve.
+`_M_find_before_node()` does mostly what we expect it to do, but has a couple
+of interesting things in the sleeve.
 
 We [locate][24] a pointer to the element before the first bucket element.
 
@@ -462,9 +464,9 @@ the hash value of each element in the bucket chain until we find the right
 one. And if the `std::hash` calls are expensive and hash code wasn't cached in
 the node, then `find` performance might severely degrade.
 
-Well, back to `_M_find_before_node`, to compare the search key with a key in the
-node we call `_M_equals`, [where][27] we compare hash values first and if they are
-equal, then compare keys.
+Well, back to `_M_find_before_node()`, to compare the search key with a key in
+the node we call `_M_equals()`, [where][27] we compare hash values first and if
+they are equal, then compare keys.
 
 ```cpp
 bool
@@ -473,10 +475,10 @@ const _Hash_node_value<_Value, __hash_cached::value>& __n) const
 { return _S_equals(__c, __n) && _M_key_equals(__k, __n); }
 ```
 
-And at the same time, `_S_equals` have two overloads, one for nodes with cached
-value and one for nodes without hash. When a node [has cached value][28], we
-compare key hash with a hash in the node. If there is [no cached hash
-value][29], we do nothing. Think about integer keys for example. We know
+And at the same time, `_S_equals()` have two overloads, one for nodes with
+cached value and one for nodes without hash. When a node [has cached
+value][28], we compare key hash with a hash in the node. If there is [no cached
+hash value][29], we do nothing. Think about integer keys for example. We know
 `std::hash<int>{}(x) == x`, so there is no point in comparing hashes first.
 
 ```cpp
@@ -492,7 +494,7 @@ _S_equals(__hash_code, const _Hash_node_code_cache<false>&)
 ## Erase
 
 Last operation we need to cover to get a complete understanding of basic hash
-table operations is `erase`. As I mentioned above, from the internal
+table operations is `erase()`. As I mentioned above, from the internal
 representation point of view, nodes are connected together as a singly linked
 list, so erase operation is [similar][30] to element removal from linked list.
 
@@ -502,7 +504,7 @@ node we are going to remove. There are again two possible paths for «small» an
 hash tables.
 
 For «small» tables we just do a linear search in the linked list by calling
-`_M_find_before_node`.
+`_M_find_before_node()`.
 
 ```cpp
 if (size() <= __small_size_threshold())
@@ -536,11 +538,11 @@ else
   }
 ```
 
-If we found something, the actual manipulations with the linked list pointers are
-done in the [overload][31] of `_M_erase` method for three arguments: `__bkt`
-(bucket), `__prev_n` (previous node in the hash table linked list) and `__n`
-(node we want to erase), where we update `_M_nxt ` pointer for `__prev_n` and
-`_M_buckets` value if necessary, then destroy the node itself.
+If we found something, the actual manipulations with the linked list pointers
+are done in the [overload][31] of `_M_erase()` method for three arguments:
+`__bkt` (bucket), `__prev_n` (previous node in the hash table linked list) and
+`__n` (node we want to erase), where we update `_M_nxt ` pointer for `__prev_n`
+and `_M_buckets` value if necessary, then destroy the node itself.
 
 ```cpp
 if (__prev_n == _M_buckets[__bkt])
