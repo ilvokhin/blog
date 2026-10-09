@@ -91,8 +91,8 @@ for sure have a few files with the short name like `algorithm.png`, but with
 a different content. To avoid collisions and to save myself from future
 pain, it is better to store pictures for each post separately.
 
-```
-% tree posts
+```text
+$ tree posts
 posts
 ├── hashtables
 │   ├── hashtables.md
@@ -127,7 +127,7 @@ bring.
 The plan was to implement the following pipeline, which (I believe) is quite
 common for static sites at the moment.
 
-```
+```text
 Localhost:
 .---------------.        .---------------.        .---------------.
 |               |  (1)   |               |  (2)   |               |
@@ -164,8 +164,8 @@ tools. The only one custom component is a Generator (from Markdown to HTML)
 itself. It took less than 200 lines to implement desired logic with [Jinja][4]
 as a template engine and [Markdown][5] library for markup support.
 
-```
-% wc -l blog/*py
+```text
+$ wc -l blog/*py
        0 blog/__init__.py
       59 blog/blog.py
       14 blog/feed.py
