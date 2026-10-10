@@ -11,6 +11,7 @@ from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
 from post import Post
 from feed import Feed
 from atom import Atom
+from highlight import Highlight
 
 
 def recreate_workdir(basedir: str) -> None:
@@ -43,6 +44,8 @@ def generate_blog() -> None:
 
     workdir = "remote"
     recreate_workdir(workdir)
+
+    Highlight.generate(workdir)
 
     for post in posts:
         post.generate(workdir)

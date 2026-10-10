@@ -15,5 +15,15 @@ def write_file_content(filename: str, data: str) -> None:
 
 def to_html(filename: str) -> str:
     text = read_file_content(filename)
-    return markdown.markdown(text, extensions=["fenced_code", "footnotes",
-                                               TocExtension(anchorlink=True)])
+    return markdown.markdown(
+        text,
+        extensions=[
+            "fenced_code",
+            "footnotes",
+            "codehilite",
+            TocExtension(anchorlink=True)
+        ],
+        extension_configs={
+            "codehilite": {"css_class": "highlight"}
+        },
+    )

@@ -5,7 +5,10 @@ MarkupSafe==2.1.1
 mypy==0.991
 mypy-extensions==1.0.0
 pycodestyle==2.10.0
+Pygments==2.21.0
 tomli==2.0.1
+types-docutils==0.22.3.20251115
 types-Markdown==3.4.2.2
-typing-extensions==4.12.2
+types-Pygments==2.19.0.20251121
+typing_extensions==4.12.2
 zipp==3.19.1
